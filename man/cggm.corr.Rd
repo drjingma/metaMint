@@ -20,7 +20,7 @@ each variable. Pairwise correlations are estimated using maximum likelihood afte
 and standard deviation estimates.
 
 The correlation matrix based on pairwise estimates is not necessarily positive definite. When this is the case,
-the function \code{\link{nearPD}} is used to compute the nearest positive definite correlation matrix with a
+the function \code{\link[Matrix]{nearPD}} is used to compute the nearest positive definite correlation matrix with a
 tolerance 1e-04 for enforcing positive definiteness.
 }
 \examples{
@@ -31,5 +31,6 @@ for (j in 1:(p-1)){
 }
 X <- mvrnorm(n=100, mu=rep(0,p), Sigma=S)
 X_cens <- apply(X,2,function(a) ifelse(a>1,a,0))
-S_hat <- cggm.corr(X)
+S_hat <- cggm.corr(X_cens)
+
 }

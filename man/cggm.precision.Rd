@@ -22,5 +22,25 @@ A list with items
 \item{data}{The \code{n} by \code{p} data matrix from the input}
 }
 \description{
-Function to estimate the precision matrix based on the censored Gaussian graphical model
+\code{cggm.precision} estimates the precision, or inverse covariance, matrix based on the censording Gaussian graphical model.
+}
+\details{
+A correlation matrix is first estimated data \code{X} using \code{cggm.corr}. Given the estimated correlation matrix, the
+\href{http://www-stat.wharton.upenn.edu/~tcai/paper/Precision-Matrix.pdf}{clime} method or the \href{https://cran.r-project.org/web/packages/glasso/index.html}{graphical lasso} method can be
+used to estimate the precision matrix along a sequence of regularization parameters \code{lambda}.
+}
+\examples{
+p <- 20
+S <- diag(1,p)
+for (j in 1:(p-1)){
+   S[j,j+1] <- S[j+1,j] <- 0.5
+}
+X <- mvrnorm(n=100, mu=rep(0,p), Sigma=S)
+X_cens <- apply(X,2,function(a) ifelse(a>1,a,0))
+Sinv_hat <- cggm.precision(X_cens,c(0.2,0.1,0.05),'glasso')
+}
+\references{
+Friedman, Jerome, Trevor Hastie, and Robert Tibshirani. "Sparse inverse covariance estimation with the graphical lasso." Biostatistics 9.3 (2008): 432-441.
+
+Cai, Tony, Weidong Liu, and Xi Luo. "A constrained l1 minimization approach to sparse precision matrix estimation." Journal of the American Statistical Association 106.494 (2011): 594-607.
 }

@@ -8,17 +8,22 @@
 #' and standard deviation estimates.
 #'
 #' The correlation matrix based on pairwise estimates is not necessarily positive definite. When this is the case,
-#' the function \code{\link{nearPD}} is used to compute the nearest positive definite correlation matrix with a
+#' the function \code{\link[Matrix]{nearPD}} is used to compute the nearest positive definite correlation matrix with a
 #' tolerance 1e-04 for enforcing positive definiteness.
+#' @import censReg
+#' @import mvtnorm
+#' @importFrom Rdpack reprompt
 #'@examples
-#'p <- 20
-#'S <- diag(1,p)
-#'for (j in 1:(p-1)){
+#' p <- 20
+#' S <- diag(1,p)
+#' for (j in 1:(p-1)){
 #'    S[j,j+1] <- S[j+1,j] <- 0.5
-#'}
-#'X <- mvrnorm(n=100, mu=rep(0,p), Sigma=S)
-#'X_cens <- apply(X,2,function(a) ifelse(a>1,a,0))
-#'S_hat <- cggm.corr(X)
+#' }
+#' X <- mvrnorm(n=100, mu=rep(0,p), Sigma=S)
+#' X_cens <- apply(X,2,function(a) ifelse(a>1,a,0))
+#' S_hat <- cggm.corr(X_cens)
+#'
+#' @export
 cggm.corr <- function(X){
   obj <- cgm.marginal(X)
   if (sum(obj$y_L==-Inf)==ncol(X)){
