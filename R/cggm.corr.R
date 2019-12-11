@@ -1,8 +1,9 @@
-#' Function to estimate the correlation matrix based on the censored Gaussian graphical model
+#' Function to estimate the correlation matrix
 #' @param X A sample by variable data matrix
-#' @return The estimated covariance matrix
-#' @description \code{cggm.corr} estimates the correlation between (potentially censored) continuous variables.
-#' When no variable is censored, \code{cggm.corr} estimates the correlation using Pearson's correlation coefficient.
+#' @return The estimated correlation matrix
+#' @description \code{cggm.corr} estimates the correlation between (potentially censored) continuous variables using the framework
+#' of censored Gaussian graphical models.
+#' @details When no variable is censored, \code{cggm.corr} estimates the correlation using Pearson's correlation coefficient.
 #' When there are censored variables, a univariate Tobit model is first used to estimate the marginal distribution of
 #' each variable. Pairwise correlations are estimated using maximum likelihood after plugging in the marginal mean
 #' and standard deviation estimates.
@@ -11,10 +12,10 @@
 #' the function \code{\link[Matrix]{nearPD}} is used to compute the nearest positive definite correlation matrix with a
 #' tolerance 1e-04 for enforcing positive definiteness.
 #' @import censReg
-#' @import mvtnorm
 #' @references
 #' Ma, Jing. Joint Microbial and Metabolomic Network Estimation with the Censored Gaussian Graphical Model. Technical Report. 2019.
 #'@examples
+#' library(MASS)
 #' p <- 20
 #' S <- diag(1,p)
 #' for (j in 1:(p-1)){
