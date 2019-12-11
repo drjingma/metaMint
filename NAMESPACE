@@ -3,6 +3,6 @@
 export(cggm.corr)
 export(cggm.precision)
 export(cggm.stars)
+export(mclr)
 import(censReg)
 import(mvtnorm)
-importFrom(Rdpack,reprompt)
