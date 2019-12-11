@@ -23,7 +23,6 @@
 #' @references
 #' Liu, Han, Kathryn Roeder, and Larry Wasserman. "Stability approach to regularization selection (stars) for high dimensional graphical models." Advances in neural information processing systems. 2010.
 #'
-#' @importFrom Rdpack reprompt
 #' @examples
 #' p <- 20
 #' S <- diag(1,p)

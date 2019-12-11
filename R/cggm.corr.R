@@ -12,7 +12,8 @@
 #' tolerance 1e-04 for enforcing positive definiteness.
 #' @import censReg
 #' @import mvtnorm
-#' @importFrom Rdpack reprompt
+#' @references
+#' Ma, Jing. Joint Microbial and Metabolomic Network Estimation with the Censored Gaussian Graphical Model. Technical Report. 2019.
 #'@examples
 #' p <- 20
 #' S <- diag(1,p)
