@@ -1,0 +1,16 @@
+citHeader("To cite metaMINT in publications use:")
+
+citEntry(
+  entry    = "Article",
+  title    = {metaMINT: joint estimation of metagenomic and metabolomic interaction networks},
+  author   = {Jing Ma},
+  journal  = ,
+  year     = {2019},
+  volume   = ,
+  number   = ,
+  pages    = ,
+  url      = ,
+  textVersion = paste(
+
+  )
+)
