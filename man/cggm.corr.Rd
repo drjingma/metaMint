@@ -34,3 +34,6 @@ X_cens <- apply(X,2,function(a) ifelse(a>1,a,0))
 S_hat <- cggm.corr(X_cens)
 
 }
+\references{
+Ma, Jing. Joint Microbial and Metabolomic Network Estimation with the Censored Gaussian Graphical Model. Technical Report. 2019.
+}
