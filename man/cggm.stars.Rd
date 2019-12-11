@@ -8,7 +8,7 @@ cggm.stars(est, stars.thresh = 0.1, stars.subsample.ratio = NULL,
   rep.num = 20, verbose = TRUE)
 }
 \arguments{
-\item{est}{An object from fitting \code{cggm.precision}.}
+\item{est}{An object from fitting \code{cggm.pcorr}.}
 
 \item{stars.thresh}{The variability threshold in stars. The default value is \code{0.1}. An alternative value is \code{0.05}.}
 
@@ -39,6 +39,7 @@ It also provides an additional estimated graph which merges the subsampled graph
 The subsampling procedure in stars may not be very efficient.
 }
 \examples{
+library(MASS)
 p <- 20
 S <- diag(1,p)
 for (j in 1:(p-1)){
@@ -46,8 +47,8 @@ for (j in 1:(p-1)){
 }
 X <- mvrnorm(n=100, mu=rep(0,p), Sigma=S)
 X_cens <- apply(X,2,function(a) ifelse(a>1,a,0))
-Sinv_hat <- cggm.precision(X_cens,c(0.2,0.1,0.05),'glasso')
-sel_models <- cggm.stars(Sinv_hat)
+Sinv_hat <- cggm.pcorr(X_cens,c(0.2,0.1,0.05),'glasso')
+sel_models <- cggm.stars(Sinv_hat, rep.num=5)
 }
 \references{
 Liu, Han, Kathryn Roeder, and Larry Wasserman. "Stability approach to regularization selection (stars) for high dimensional graphical models." Advances in neural information processing systems. 2010.
