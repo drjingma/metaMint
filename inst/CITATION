@@ -1,16 +1,8 @@
-citHeader("To cite metaMINT in publications use:")
+citHeader("To cite metaMint in publications use:")
 
 citEntry(
   entry    = "Article",
-  title    = {metaMINT: joint estimation of metagenomic and metabolomic interaction networks},
+  title    = {metaMint: a R package for joint estimation of metabolite and microbial interaction networks},
   author   = {Jing Ma},
-  journal  = ,
-  year     = {2019},
-  volume   = ,
-  number   = ,
-  pages    = ,
-  url      = ,
-  textVersion = paste(
-
-  )
+  year     = {2019}
 )
