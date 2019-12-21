@@ -40,6 +40,7 @@ The subsampling procedure in stars may not be very efficient.
 }
 \examples{
 library(MASS)
+library(glasso)
 p <- 20
 S <- diag(1,p)
 for (j in 1:(p-1)){
