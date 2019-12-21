@@ -1,10 +1,10 @@
 Package: metaMint
 Type: Package
-Title: Joint estimation of microbial and metabolite interaction networks
+Title: Joint estimation of metabolite and microbial interaction networks
 Version: 0.1.0
 Author: Jing Ma
 Maintainer: Jing Ma <jingma@fredhutch.org>
-Description: A latent variable model that integrates microbial and metabolite data to jointly estimate the interaction network.
+Description: A latent variable model that integrates metabolite and microbial data to jointly estimate the interaction network.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true

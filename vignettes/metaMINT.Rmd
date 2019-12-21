@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 
-This document introduces to you how to use the package **metaMint** for joint estimation of microbial and metabolite interaction network.
+This document introduces to you how to use the package **metaMint** for joint estimation of metabolite and microbial interaction network.
 
 ```{r setup}
 library(metaMint)
@@ -65,7 +65,7 @@ Alternatively, if the interest is to learn the conditional association (as defin
 est_InvCor <- cggm.pcorr(t(OTUs_mclr))
 ```
 
-The model underlying **metaMint** allows for both continuous and zero-inflated variables. Therefore, to jointly estimate the microbial and metabolite interaction network, one only needs to expand the input to include both types of measurements. 
+The model underlying **metaMint** allows for both continuous and zero-inflated variables. Therefore, to jointly estimate the metabolite and microbial interaction network, one only needs to expand the input to include both types of measurements. 
 
 ```{r MINT,eval=FALSE}
 dat_combined <- t(rbind(OTUs_mclr,metabs))

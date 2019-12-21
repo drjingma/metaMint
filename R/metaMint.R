@@ -1,4 +1,4 @@
-#' Joint estimation of microbial and metabolite interaction networks.
+#' Joint estimation of metabolite and microbial interaction networks.
 #'
 #' The metaMint package provides functions for estimating the correlation and
 #' partial correlations between microbial species and metabolites.
