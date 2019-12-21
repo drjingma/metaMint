@@ -48,7 +48,7 @@ cggm.stars <- function(est, stars.thresh=0.1,stars.subsample.ratio=NULL, rep.num
   }
 
   est$merge = list()
-  for(i in 1:nlambda) est$merge[[i]] = Matrix(0,d,d)
+  for(i in 1:nlambda) est$merge[[i]] = matrix(0,d,d)
 
   for(i in 1:rep.num)
   {
