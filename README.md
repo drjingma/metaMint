@@ -1,4 +1,4 @@
-**metaMint**
+# metaMint
 
 Method for joint estimation of metabolite and microbial interaction networks.
 
@@ -7,4 +7,7 @@ Method for joint estimation of metabolite and microbial interaction networks.
 ```{r}
 devtools::install_github("drjingma/metaMint")
 library(metaMint)
+vignette("metaMint")
 ```
+
+You can check out the vignette for an example on using the package. 
