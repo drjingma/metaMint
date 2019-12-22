@@ -24,4 +24,11 @@
 #'
 #' @docType package
 #' @name metaMint
+#' @import MASS
+#' @importFrom stats cor dnorm optimize pnorm sd
+#' @importFrom utils flush.console
+#' @importFrom mvtnorm dmvnorm pmvnorm
+#' @importFrom clime clime
+#' @importFrom compositions clr
+#' @importFrom Matrix nearPD
 NULL
