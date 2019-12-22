@@ -2,9 +2,9 @@
 title: "Introduction to metaMint"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{metaMint-vignette}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{metaMint-vignette}
+  %\VignetteEncoding{UTF-8}{inputenc}
 bibliography: references.bib
 
 ---
