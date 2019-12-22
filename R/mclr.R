@@ -21,6 +21,7 @@
 #' z_mclr <- mclr(z)
 #' # compare with clr
 #' z_clr <- apply(z,1,compositions::clr)
+#' 
 #' @export
 mclr <- function(Z, base=exp(1), eps=0.1){
   index <- which(Z>0 & !is.na(Z))

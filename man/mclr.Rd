@@ -35,6 +35,7 @@ z <- rbind(x,y)
 z_mclr <- mclr(z)
 # compare with clr
 z_clr <- apply(z,1,compositions::clr)
+
 }
 \references{
 Yoon, Grace, Irina Gaynanova, and Christian L. Müller. "Microbial networks in SPRING-Semi-parametric rank-based correlation and partial correlation estimation for quantitative microbiome data." Frontiers in Genetics 10 (2019).
