@@ -2,7 +2,15 @@ citHeader("To cite metaMint in publications use:")
 
 citEntry(
   entry    = "Article",
-  title    = {metaMint: a R package for joint estimation of metabolite and microbial interaction networks},
-  author   = {Jing Ma},
-  year     = {2019}
+  title    = "metaMint: An R package for joint estimation of metabolite and microbial interaction networks",
+  author   = "Jing Ma",
+  journal  = "The Comprehensive R Archive Network",
+  year     = "2019",
+  volume   = "",
+  number   = "",
+  pages    = "",
+  url      = "https://CRAN.R-project.org/package=metaMint",
+  textVersion = paste(
+
+  )
 )
