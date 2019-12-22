@@ -1,0 +1,84 @@
+---
+title: "Introduction to metaMint"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{metaMint-vignette}
+  %\VignetteEncoding{UTF-8}{inputenc}
+bibliography: references.bib
+
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",eval=FALSE
+)
+```
+
+
+This document introduces to you how to use the package **metaMint** for joint estimation of metabolite and microbial interaction network.
+
+```{r setup}
+library(metaMint)
+library(dplyr)
+library(GGally)
+```
+
+## Data
+
+We use an example data set from @mcmillan2015multi that has 51 bacterial taxa and 128 metabolites measured over 131 samples. Taxonomic counts were obtained using 16S rRNA gene sequencing, whereas metabolite profiling was done by gas chromatography-mass spectrometry (GC-MS). 
+
+```{r}
+data(BV, package = "metaMint")
+```
+
+Before calling the package, it is important to preprocess the taxonomic count data which is subject to the total library size constraint. A common practice is to apply the centered log-ratio (clr) transformation. Briefly, for a vector $r$ with $p$ components, let $g(r)=(\Pi_{j=1}^p)^{1/p}$ denote its geometric mean. The clr of $r$ is defined as
+\[
+{\rm clr}(r) = \left( \log \frac{r_1}{g(r)},\ldots,\log \frac{r_p}{g(r)}\right)^\intercal.
+\]
+It is easy to see that the clr transformation does not allow zero counts. To address this issue, a small pseudocount of 0.5 or 1 is often added to all counts before applying the transformation. However, adding pseudocounts may unfairly bias rare species. 
+
+To avoid introducing artificial bias, we use instead the modified-clr (mclr) transformation. The mclr transforms the
+non-zero counts with the usual clr and shifts all transformed values to be strictly positive. Details on how mclr compares with clr transformation can be found in @yoon2019microbial. The following Figure illustrates the different marginal distributions one gets with clr and mclr transformation. The mclr transformed value can be modeled using a censored normal distribution, which provides the basis for our method. 
+
+```{r clr,fig.cap='Illustration of how clr and mclr transformation affects the marginal distribution of one OTU.'}
+OTUs_clr <- apply(OTUs,2,compositions::clr)
+OTUs_mclr <- t(clr.epsilon(t(OTUs)))
+
+ggpairs(data.frame(clr=OTUs_clr[22,],
+                   mclr=OTUs_mclr[22,]),
+        diag = list(continuous = "barDiag",binwidth = 0.5))
+```
+
+## Estimation 
+
+With preprocessed data, we are now ready to show how to use the main functions in **metaMint**. One can use the function `cggm.corr` to estimate the correlations among bacterial taxa.
+
+```{r cor,eval=FALSE}
+est_Cor <- cggm.corr(t(OTUs_mclr))
+```
+
+Alternatively, if the interest is to learn the conditional association (as defined by partial correlations) among bacterial taxa, one can use the function `cggm.pcorr`. 
+
+```{r invcor,eval=FALSE}
+est_InvCor <- cggm.pcorr(t(OTUs_mclr))
+```
+
+The model underlying **metaMint** allows for both continuous and zero-inflated variables. Therefore, to jointly estimate the metabolite and microbial interaction network, one only needs to expand the input to include both types of measurements. 
+
+```{r MINT,eval=FALSE}
+dat_combined <- t(rbind(OTUs_mclr,metabs))
+est_InvCor_combined <- cggm.pcorr(dat_combined)
+```
+
+## Model Selection
+
+The function `cggm.stars` provides a way for selecting the optimal regularization parameter that controls the sparsity of the estimated partial correlation network. It is based on the idea of stability selection [@liu2010stability]. 
+
+```{r stars,eval=FALSE}
+est_InvCor <- cggm.pcorr(t(OTUs_mclr))
+stars_obj <- cggm.stars(est_InvCor,stars.thresh = 0.1, rep.num = 20)
+```
+
+## References
