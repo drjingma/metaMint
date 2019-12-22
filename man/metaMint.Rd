@@ -14,7 +14,7 @@ partial correlations between microbial species and metabolites.
  Package: \tab metaMint\cr
  Type: \tab Package\cr
  Version: \tab 0.1.0\cr
- Date: \tab 2019-12-12\cr
+ Date: \tab 2019-12-21\cr
  License: \tab GPL (>=2)\cr
 }
 }
