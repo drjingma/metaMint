@@ -1,6 +1,6 @@
-# metaMint
+# About
 
-Method for joint estimation of metabolite and microbial interaction networks.
+This package implements a method for joint estimation of metabolite and microbial interaction networks.
 
 ## How to install?
 
