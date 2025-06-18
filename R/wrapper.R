@@ -39,39 +39,50 @@
 #' 
 #' @export
 analyze_microbiome_metabolite_network <- function(X, Y, 
-                                                  method = c("corr", "pcorr", "sbm", "bisbm"),
-                                                  zscore_method = c("pearson+fisher", "CL"),
+                                                  method,
                                                   lambda = NULL,
                                                   alpha = 0.1,
-                                                  sbm_model,
-                                                  sbm_params,
-                                                  init_params,
+                                                  zscore_method = NULL,
+                                                  sbm_model = NULL,
+                                                  sbm_params = NULL,
+                                                  init_params = NULL,
                                                   nb_cores = 1,
                                                   verbose = TRUE) {
   
-  # Input validation
-  method <- match.arg(method)
-  zscore_method <- match.arg(zscore_method)
-  # Default values
-  default_sbm_model <- "Gauss01"
-  default_sbm_params <- list(Q1 = 1:5, Q2 = 1:5, explor = 1.5)
-  default_init_params <- list(nbOfbeta = 1, nbOfPointsPerbeta = NULL,
-                              maxNbOfPasses = 2, minNbOfPasses = 1)
+  # Input validation and default values
+  method <- match.arg(method, c("corr", "pcorr", "sbm", "bisbm"))
   
-  if (missing(sbm_model)) sbm_model <- default_sbm_model
-  if (missing(sbm_params)) sbm_params <- default_sbm_params
-  if (missing(init_params)) init_params <- default_init_params
-  
-  if (!is.null(lambda) && method != "pcorr") {
-    warning("lambda is only used when method = 'pcorr'; the provided value will be ignored.")
-  }
-  
-  if (!(method %in% c("sbm", "bisbm"))) {
-    if (!missing(sbm_model) || !missing(sbm_params) || !missing(init_params)) {
-      warning("sbm_model, sbm_params, and init_params are only used when method = 'sbm' or 'bisbm'; the provided values will be ignored.")
+  if (method != "pcorr") {
+    if (!is.null(lambda)) {
+      warning("lambda is only used when method = 'pcorr'; the provided value will be ignored.")
     }
   }
   
+  if (method %in% c("corr", "pcorr")) {
+    if (!is.null(zscore_method)) {
+      warning("zscore_method is only used when method = 'sbm' or 'bisbm'; the provided value will be ignored.")
+    }
+    if (!is.null(sbm_model)) {
+      warning("sbm_model is only used when method = 'sbm' or 'bisbm'; the provided value will be ignored.")
+    }
+    if (!is.null(sbm_params)) {
+      warning("sbm_params is only used when method = 'sbm' or 'bisbm'; the provided value will be ignored.")
+    }
+    if (!is.null(init_params)) {
+      warning("init_params is only used when method = 'sbm' or 'bisbm'; the provided value will be ignored.")
+    }
+  }
+  
+  if (method %in% c("sbm", "bisbm")) {
+    if (is.null(zscore_method)) {
+      # default
+      zscore_method <- "pearson+fisher"
+      message("`zscore_method` not provided, using default: '", zscore_method, "'.")
+    } else {
+      zscore_method <- match.arg(zscore_method, c("pearson+fisher", "CL"))
+    }
+  }
+
   if (verbose) {
     cat("Starting microbiome-metabolite network analysis with method:", method, "\n")
   }
@@ -195,36 +206,76 @@ run_sbm_method <- function(X, Y, method, zscore_method, alpha, sbm_model,
   return(result)
 }
 
+#' Internal function to compute CL test statistic
+compute_CL_test_statistic <- function(X, Y) {
+  # X: p x n1 matrix
+  # Y: p x n2 matrix
+  p <- nrow(X)
+  n1 <- ncol(X)
+  n2 <- ncol(Y)
+  
+  # Standardize X and Y
+  X_centered <- scale(t(X), center = TRUE, scale = TRUE) # n1 x p
+  Y_centered <- scale(t(Y), center = TRUE, scale = TRUE) # n2 x p
+  
+  # Compute sample correlations
+  rho_X <- cor(X_centered)
+  rho_Y <- cor(Y_centered)
+  
+  T_mat <- matrix(0, p, p)
+  
+  for (i in 1:(p-1)) {
+    for (j in (i+1):p) {
+      rho1 <- rho_X[i, j]
+      rho2 <- rho_Y[i, j]
+      
+      # Compute theta_hat for X
+      x_i <- X_centered[, i]
+      x_j <- X_centered[, j]
+      theta1 <- mean((2 * x_i * x_j - rho1 * x_i^2 - rho1 * x_j^2)^2)
+      
+      # Compute theta_hat for Y
+      y_i <- Y_centered[, i]
+      y_j <- Y_centered[, j]
+      theta2 <- mean((2 * y_i * y_j - rho2 * y_i^2 - rho2 * y_j^2)^2)
+      
+      # Compute T'
+      T_val <- 2 * (rho1 - rho2) / sqrt(theta1 / n1 + theta2 / n2)
+      T_mat[i, j] <- T_val
+      T_mat[j, i] <- T_val
+    }
+  }
+  return(T_mat)
+}
+
 #' Internal function to run SBM analysis
 runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params, init_params, nb_cores, verbose) {
+  # Combine X and Y (features x samples)
+  combined_data <- rbind(X, Y)  # dimension: (p+q) x n
+  n_total <- nrow(combined_data)
+  data_matrix <- matrix(0, n_total, n_total)
   
-  # Apply z-score normalization
-  if (verbose) cat("Applying z-score normalization method:", zscore_method, "\n")
-  
-  if (zscore_method == "pearson+fisher") {
-    # Pearson correlation + Fisher z-transform
-    X_norm <- apply(X, 1, scale)  # standardize each feature
-    Y_norm <- apply(Y, 1, scale)
-    combined_norm <- rbind(t(X_norm), t(Y_norm))
-  } else if (zscore_method == "CL") {
-    # combined_norm <- rbind(X_clr, Y_clr)
+  # Fill with pairwise relationships
+  for (i in 1:(n_total-1)) {
+    for (j in (i+1):n_total) {
+      # Compute correlation
+      if (zscore_method == "spearman+fisher") {
+        corr_val <- cor(combined_data[i, ], combined_data[j, ],
+                        method="spearman")
+      }
+      else if (zscore_method == "pearson+fisher") {
+        corr_val <- cor(combined_data[i, ], combined_data[j, ],
+                        method="pearson")
+      }
+      
+      # Fisher transformation
+      z_val <- 0.5 * log((1 + corr_val) / (1 - corr_val))
+      
+      data_matrix[i, j] <- data_matrix[j, i] <- z_val
+    }
   }
   
-  # Create data matrix for SBM
   if (method == "sbm") {
-    # For SBM, create full symmetric matrix
-    n_total <- nrow(combined_norm)
-    data_matrix <- matrix(0, n_total, n_total)
-    
-    # Fill with pairwise relationships
-    for (i in 1:(n_total-1)) {
-      for (j in (i+1):n_total) {
-        # Compute correlation or distance metric
-        corr_val <- cor(combined_norm[i, ], combined_norm[j, ])
-        data_matrix[i, j] <- data_matrix[j, i] <- corr_val
-      }
-    }
-    
     if (verbose) cat("Running fitNSBM...\n")
     sbm_fit <- fitNSBM(data_matrix, 
                        model = sbm_model,
@@ -257,9 +308,6 @@ runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params, in
     
   } else if (method == "bisbm") {
     # For biSBM, use bipartite structure
-    # Create bipartite data matrix (microbiome x metabolite)
-    data_matrix <- t(X) %*% Y / ncol(X)  # Simple cross-correlation matrix
-    
     if (verbose) cat("Running fitNobiSBM...\n")
     bisbm_fit <- fitNobiSBM(data_matrix,
                             model = sbm_model,
@@ -300,6 +348,19 @@ runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params, in
   return(result)
 }
 
+
+# # Apply z-score normalization
+# if (verbose) cat("Applying z-score normalization method:", zscore_method, "\n")
+# 
+# if (zscore_method == "pearson+fisher") {
+#   # Pearson correlation + Fisher z-transform
+#   X_norm <- apply(X, 1, scale)  # standardize each feature
+#   Y_norm <- apply(Y, 1, scale)
+#   combined_norm <- rbind(t(X_norm), t(Y_norm))
+# } else if (zscore_method == "CL") {
+#   # combined_norm <- rbind(X_clr, Y_clr)
+# }
+# 
 
 #' Print method for network analysis results
 #' @export
