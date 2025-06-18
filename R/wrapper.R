@@ -1,12 +1,26 @@
 #' Microbiome-Metabolite Network Analysis Wrapper
 #' 
 #' @param X A p x n matrix of microbiome abundances (p features, n samples)
-#' @param Y A q x n matrix of metabolites (q features, n samples)
-#' @param method Character string specifying the method: "conditional", "pc_conditional", "sbm_marginal", or "bisbm_marginal"
-#' @param zscore_method Character string specifying z-score normalization for marginal methods: "pearson+fisher" or "CLR"
-#' @param lambda A sequence of decreasing positive numbers for regularization (used in pc_conditional method)
+#' @param Y A q x n matrix of metabolite abundances (q features, n samples)
+#' @param method Character string specifying the method to use.
+#' One of: 
+#'   \describe{
+#'     \item{"corr"}{Marginal correlation}
+#'     \item{"pcorr"}{Partial correlation (e.g., graphical lasso)}
+#'     \item{"sbm"}{Stochastic Block Model on marginal associations}
+#'     \item{"bisbm"}{Bipartite SBM on marginal associations}
+#'   }
+#' @param zscore_method Character string specifying z-score normalization for marginal SBM methods
+#' One of: 
+#'   \describe{
+#'     \item{"pearson+fisher"}{Uses Pearson correlation, followed by Fisher transform}
+#'     \item{"CL"}{Uses the method from Cai and Liu}
+#'   }
+#' @param lambda A sequence of decreasing positive numbers for regularization (used in pcorr method)
 #' @param alpha Significance level for graph inference (default: 0.1)
-#' @param model Model type for SBM methods (default: "Gauss01")
+#' @param sbm_model Character string specifying the model type for SBM methods 
+#' (default: \code{"Gauss01"}). For other model options, see the documentation 
+#' for \code{fitNSBM} in the \pkg{noisySBM} package.
 #' @param sbm_params List of parameters for SBM methods (Q1, Q2, explor)
 #' @param init_params List of initialization parameters for SBM methods
 #' @param nb_cores Number of cores for parallel processing (default: 1)
@@ -15,7 +29,7 @@
 #' @return A list containing:
 #' \describe{
 #'   \item{method}{The method used}
-#'   \item{correlation_matrix}{Estimated correlation/partial correlation matrix (for conditional methods)}
+#'   \item{correlation_matrix}{Estimated correlation/partial correlation matrix (for correlation methods)}
 #'   \item{adjacency_matrix}{Inferred adjacency matrix}
 #'   \item{clustering}{Node clustering results (for SBM methods)}
 #'   \item{parameters}{Estimated model parameters}
@@ -25,20 +39,38 @@
 #' 
 #' @export
 analyze_microbiome_metabolite_network <- function(X, Y, 
-                                                  method = c("conditional", "pc_conditional", "sbm_marginal", "bisbm_marginal"),
-                                                  zscore_method = c("pearson+fisher", "CLR"),
+                                                  method = c("corr", "pcorr", "sbm", "bisbm"),
+                                                  zscore_method = c("pearson+fisher", "CL"),
                                                   lambda = NULL,
                                                   alpha = 0.1,
-                                                  model = "Gauss01",
-                                                  sbm_params = list(Q1 = 1:5, Q2 = 1:5, explor = 1.5),
-                                                  init_params = list(nbOfbeta = 1, nbOfPointsPerbeta = NULL,
-                                                                     maxNbOfPasses = 2, minNbOfPasses = 1),
+                                                  sbm_model,
+                                                  sbm_params,
+                                                  init_params,
                                                   nb_cores = 1,
                                                   verbose = TRUE) {
   
   # Input validation
   method <- match.arg(method)
   zscore_method <- match.arg(zscore_method)
+  # Default values
+  default_sbm_model <- "Gauss01"
+  default_sbm_params <- list(Q1 = 1:5, Q2 = 1:5, explor = 1.5)
+  default_init_params <- list(nbOfbeta = 1, nbOfPointsPerbeta = NULL,
+                              maxNbOfPasses = 2, minNbOfPasses = 1)
+  
+  if (missing(sbm_model)) sbm_model <- default_sbm_model
+  if (missing(sbm_params)) sbm_params <- default_sbm_params
+  if (missing(init_params)) init_params <- default_init_params
+  
+  if (!is.null(lambda) && method != "pcorr") {
+    warning("lambda is only used when method = 'pcorr'; the provided value will be ignored.")
+  }
+  
+  if (!(method %in% c("sbm", "bisbm"))) {
+    if (!missing(sbm_model) || !missing(sbm_params) || !missing(init_params)) {
+      warning("sbm_model, sbm_params, and init_params are only used when method = 'sbm' or 'bisbm'; the provided values will be ignored.")
+    }
+  }
   
   if (verbose) {
     cat("Starting microbiome-metabolite network analysis with method:", method, "\n")
@@ -65,14 +97,14 @@ analyze_microbiome_metabolite_network <- function(X, Y,
   )
   
   # Method-specific analysis
-  if (method %in% c("conditional", "pc_conditional")) {
-    # Conditional methods
-    result <- analyze_conditional_methods(X, Y, method, lambda, alpha, verbose, result)
+  if (method %in% c("corr", "pcorr")) {
+    # Correlation methods
+    result <- run_correlation_method(X, Y, method, lambda, alpha, verbose, result)
     
-  } else if (method %in% c("sbm_marginal", "bisbm_marginal")) {
-    # Marginal SBM methods
-    result <- analyze_marginal_sbm_methods(X, Y, method, zscore_method, alpha, model, 
-                                           sbm_params, init_params, nb_cores, verbose, result)
+  } else if (method %in% c("sbm", "bisbm")) {
+    # SBM methods
+    result <- run_sbm_method(X, Y, method, zscore_method, alpha, sbm_model, 
+                             sbm_params, init_params, nb_cores, verbose, result)
   }
   
   if (verbose) {
@@ -82,13 +114,13 @@ analyze_microbiome_metabolite_network <- function(X, Y,
   return(result)
 }
 
-#' Internal function for conditional methods
-analyze_conditional_methods <- function(X, Y, method, lambda, alpha, verbose, result) {
+#' Internal function for correlation methods
+run_correlation_method <- function(X, Y, method, lambda, alpha, verbose, result) {
   
   # Combine X and Y matrices (samples as rows for cggm functions)
   combined_data <- t(rbind(X, Y))  # n x (p+q) matrix
   
-  if (method == "conditional") {
+  if (method == "corr") {
     if (verbose) cat("Computing correlation matrix using cggm.corr...\n")
     
     # Estimate correlation matrix
@@ -98,8 +130,8 @@ analyze_conditional_methods <- function(X, Y, method, lambda, alpha, verbose, re
     # Create adjacency matrix based on correlation threshold
     # Using Fisher's z-transform for significance testing
     n_samples <- nrow(combined_data)
-    z_scores <- 0.5 * log((1 + abs(correlation_matrix)) / (1 - abs(correlation_matrix)))
-    p_values <- 2 * pnorm(abs(z_scores) * sqrt(n_samples - 3), lower.tail = FALSE)
+    z_scores <- 0.5 * log((1 + correlation_matrix) / (1 - correlation_matrix))
+    p_values <- pnorm(z_scores * sqrt(n_samples - 3), lower.tail = FALSE)
     
     # Adjust p-values using FDR
     q_values <- p.adjust(p_values, method = "fdr")
@@ -112,7 +144,7 @@ analyze_conditional_methods <- function(X, Y, method, lambda, alpha, verbose, re
     
     result$adjacency_matrix <- adjacency_matrix
     
-  } else if (method == "pc_conditional") {
+  } else if (method == "pcorr") {
     if (verbose) cat("Computing partial correlation matrix using cggm.pcorr...\n")
     
     # Set default lambda if not provided
@@ -123,9 +155,10 @@ analyze_conditional_methods <- function(X, Y, method, lambda, alpha, verbose, re
     # Estimate partial correlation matrices
     pcorr_result <- cggm.pcorr(combined_data, lambda = lambda, method = "glasso")
     
-    # Select best lambda using cross-validation or BIC (simplified approach)
-    best_lambda_idx <- select_best_lambda(pcorr_result, combined_data)
-    
+    # Select best lambda using cggm.stars
+    best_lambda <- cggm.stars(pcorr_result)
+    best_lambda_idx <- best_lambda$opt.index
+      
     result$correlation_matrix <- pcorr_result$cov
     result$partial_correlation_matrix <- solve(pcorr_result$icov[[best_lambda_idx]])
     result$adjacency_matrix <- pcorr_result$path[[best_lambda_idx]]
@@ -141,13 +174,13 @@ analyze_conditional_methods <- function(X, Y, method, lambda, alpha, verbose, re
 }
 
 #' Internal function for marginal SBM methods
-analyze_marginal_sbm_methods <- function(X, Y, method, zscore_method, alpha, model, 
-                                         sbm_params, init_params, nb_cores, verbose, result) {
+run_sbm_method <- function(X, Y, method, zscore_method, alpha, sbm_model, 
+                           sbm_params, init_params, nb_cores, verbose, result) {
   
   if (verbose) cat("Running SBM analysis with method:", method, "\n")
   
   # Run SBM analysis
-  sbm_result <- runSBM(X, Y, method, zscore_method, alpha, model, 
+  sbm_result <- runSBM(X, Y, method, zscore_method, alpha, sbm_model, 
                        sbm_params, init_params, nb_cores, verbose)
   
   # Store results
@@ -163,7 +196,7 @@ analyze_marginal_sbm_methods <- function(X, Y, method, zscore_method, alpha, mod
 }
 
 #' Internal function to run SBM analysis
-runSBM <- function(X, Y, method, zscore_method, alpha, model, sbm_params, init_params, nb_cores, verbose) {
+runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params, init_params, nb_cores, verbose) {
   
   # Apply z-score normalization
   if (verbose) cat("Applying z-score normalization method:", zscore_method, "\n")
@@ -173,15 +206,12 @@ runSBM <- function(X, Y, method, zscore_method, alpha, model, sbm_params, init_p
     X_norm <- apply(X, 1, scale)  # standardize each feature
     Y_norm <- apply(Y, 1, scale)
     combined_norm <- rbind(t(X_norm), t(Y_norm))
-  } else if (zscore_method == "CLR") {
-    # Centered log-ratio transformation
-    X_clr <- apply(X, 2, function(x) log(x / exp(mean(log(x[x > 0])))))
-    Y_clr <- apply(Y, 2, function(x) log(x / exp(mean(log(x[x > 0])))))
-    combined_norm <- rbind(X_clr, Y_clr)
+  } else if (zscore_method == "CL") {
+    # combined_norm <- rbind(X_clr, Y_clr)
   }
   
   # Create data matrix for SBM
-  if (method == "sbm_marginal") {
+  if (method == "sbm") {
     # For SBM, create full symmetric matrix
     n_total <- nrow(combined_norm)
     data_matrix <- matrix(0, n_total, n_total)
@@ -197,7 +227,7 @@ runSBM <- function(X, Y, method, zscore_method, alpha, model, sbm_params, init_p
     
     if (verbose) cat("Running fitNSBM...\n")
     sbm_fit <- fitNSBM(data_matrix, 
-                       model = model,
+                       model = sbm_model,
                        sbmSize = list(Qmin = min(sbm_params$Q1), 
                                       Qmax = max(sbm_params$Q1), 
                                       explor = sbm_params$explor),
@@ -225,14 +255,14 @@ runSBM <- function(X, Y, method, zscore_method, alpha, model, sbm_params, init_p
       )
     )
     
-  } else if (method == "bisbm_marginal") {
+  } else if (method == "bisbm") {
     # For biSBM, use bipartite structure
     # Create bipartite data matrix (microbiome x metabolite)
     data_matrix <- t(X) %*% Y / ncol(X)  # Simple cross-correlation matrix
     
     if (verbose) cat("Running fitNobiSBM...\n")
     bisbm_fit <- fitNobiSBM(data_matrix,
-                            model = model,
+                            model = sbm_model,
                             exclusive_Rows_Cols = FALSE,
                             sbmSize = sbm_params,
                             initParam = init_params,
@@ -270,56 +300,6 @@ runSBM <- function(X, Y, method, zscore_method, alpha, model, sbm_params, init_p
   return(result)
 }
 
-#' Helper function to select best lambda for partial correlation
-select_best_lambda <- function(pcorr_result, data) {
-  # Simple BIC-based selection (can be improved with cross-validation)
-  n <- nrow(data)
-  p <- ncol(data)
-  
-  bic_values <- sapply(1:length(pcorr_result$lambda), function(i) {
-    adj_matrix <- pcorr_result$path[[i]]
-    num_edges <- sum(adj_matrix) / 2  # undirected graph
-    
-    # Compute log-likelihood (simplified)
-    precision_matrix <- pcorr_result$icov[[i]]
-    log_det <- determinant(precision_matrix, logarithm = TRUE)$modulus
-    
-    if (is.finite(log_det)) {
-      log_likelihood <- n/2 * (log_det - sum(diag(cov(data) %*% precision_matrix)))
-      bic <- -2 * log_likelihood + log(n) * num_edges
-    } else {
-      bic <- Inf
-    }
-    
-    return(bic)
-  })
-  
-  return(which.min(bic_values))
-}
-
-#' Placeholder function for graphInferenceNobiSBM (to be implemented based on your package)
-graphInferenceNobiSBM <- function(dataMatrix, clustering_row, clustering_col, theta, alpha) {
-  # This function should implement graph inference for bipartite SBM
-  # Based on the structure shown in your examples
-  
-  # Placeholder implementation - replace with actual function
-  warning("graphInferenceNobiSBM is a placeholder function. Please implement based on your package.")
-  
-  n1 <- nrow(dataMatrix)
-  n2 <- ncol(dataMatrix)
-  
-  # Simple thresholding as placeholder
-  p_values <- 2 * pnorm(abs(as.vector(dataMatrix)), lower.tail = FALSE)
-  q_values <- p.adjust(p_values, method = "fdr")
-  
-  adjacency_matrix <- matrix(0, n1, n2)
-  adjacency_matrix[q_values < alpha] <- 1
-  
-  return(list(
-    A = adjacency_matrix,
-    qvalues = matrix(q_values, nrow = n1, ncol = n2)
-  ))
-}
 
 #' Print method for network analysis results
 #' @export
@@ -336,9 +316,9 @@ print.microbiome_network_result <- function(x, ...) {
   }
   
   if (!is.null(x$model_selection)) {
-    if (x$method == "sbm_marginal") {
+    if (x$method == "sbm") {
       cat("Best number of blocks (Q):", x$model_selection$best_Q, "\n")
-    } else if (x$method == "bisbm_marginal") {
+    } else if (x$method == "bisbm") {
       cat("Best number of blocks: Q1 =", x$model_selection$best_Q1, 
           ", Q2 =", x$model_selection$best_Q2, "\n")
     }
@@ -361,8 +341,8 @@ example_usage <- function() {
   cat("# Run analysis\n")
   cat("result <- analyze_microbiome_metabolite_network(\n")
   cat("  X = X, Y = Y,\n")
-  cat("  method = 'bisbm_marginal',\n")
-  cat("  zscore_method = 'CLR',\n")
+  cat("  method = 'bisbm',\n")
+  cat("  zscore_method = 'CL',\n")
   cat("  alpha = 0.1\n")
   cat(")\n")
   cat("\n")
