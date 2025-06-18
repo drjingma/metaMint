@@ -250,22 +250,18 @@ compute_CL_test_statistic <- function(X, Y) {
 
 #' Internal function to run SBM analysis
 runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params, init_params, nb_cores, verbose) {
-  # Combine X and Y (features x samples)
-  combined_data <- rbind(X, Y)  # dimension: (p+q) x n
-  n_total <- nrow(combined_data)
-  data_matrix <- matrix(0, n_total, n_total)
+  combined_data <- t(rbind(X, Y))  # dimension: n x (p + q)
+  n_features <- ncol(combined_data)
+  data_matrix <- matrix(0, n_features, n_features)
   
-  # Fill with pairwise relationships
-  for (i in 1:(n_total-1)) {
-    for (j in (i+1):n_total) {
-      # Compute correlation
+  # Fill with pairwise relationships between features
+  for (i in 1:(n_features - 1)) {
+    for (j in (i + 1):n_features) {
+      # Compute correlation between features i and j (across samples)
       if (zscore_method == "spearman+fisher") {
-        corr_val <- cor(combined_data[i, ], combined_data[j, ],
-                        method="spearman")
-      }
-      else if (zscore_method == "pearson+fisher") {
-        corr_val <- cor(combined_data[i, ], combined_data[j, ],
-                        method="pearson")
+        corr_val <- cor(combined_data[, i], combined_data[, j], method = "spearman")
+      } else if (zscore_method == "pearson+fisher") {
+        corr_val <- cor(combined_data[, i], combined_data[, j], method = "pearson")
       }
       
       # Fisher transformation
