@@ -271,7 +271,7 @@ runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params, in
     }
   }
   
-  if (method == "sbm") {
+  if (method == "sbm") { # (p+q) x (p+q)
     if (verbose) cat("Running fitNSBM...\n")
     sbm_fit <- fitNSBM(data_matrix, 
                        model = sbm_model,
@@ -302,7 +302,7 @@ runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params, in
       )
     )
     
-  } else if (method == "bisbm") {
+  } else if (method == "bisbm") { # (p x q)
     # For biSBM, use bipartite structure
     if (verbose) cat("Running fitNobiSBM...\n")
     bisbm_fit <- fitNobiSBM(data_matrix,
