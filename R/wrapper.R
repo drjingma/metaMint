@@ -51,6 +51,11 @@ analyze_microbiome_metabolite_network <- function(X, Y,
   # Input validation and default values
   method <- match.arg(method, c("corr", "pcorr", "bisbm"))
   
+  # Check matrix dimensions
+  if (ncol(X) != ncol(Y)) {
+    stop("X and Y must have the same number of samples (columns)")
+  }
+  
   if (method != "pcorr") {
     if (!is.null(lambda)) {
       warning("lambda is only used when method = 'pcorr'; the provided value will be ignored.")
@@ -75,8 +80,8 @@ analyze_microbiome_metabolite_network <- function(X, Y,
       # Set default lambda if not provided
       if (is.null(lambda)) {
         message("`lambda` not provided, using default sequence: ",
-                "seq(0.5, 0.01, length.out = 20)")
-        lambda <- seq(0.5, 0.01, length.out = 20)
+                "seq(0.1, 3, 0.1) * sqrt(log(p) / n)")
+        lambda <- seq(0.1, 3, 0.1) * sqrt(log(nrow(X) + nrow(Y)) / ncol(X))
       }
     }
   }
@@ -140,11 +145,6 @@ analyze_microbiome_metabolite_network <- function(X, Y,
                           maxNbOfPasses=NULL, minNbOfPasses=1)
       message("`init_params` not provided, using default: nbOfbeta=NULL, nbOfPointsPerbeta=NULL, maxNbOfPasses=NULL, minNbOfPasses=1")
     }
-  }
-
-  # Check matrix dimensions
-  if (ncol(X) != ncol(Y)) {
-    stop("X and Y must have the same number of samples (columns)")
   }
   
   if (verbose) {
