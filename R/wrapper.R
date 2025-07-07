@@ -17,9 +17,9 @@
 #'     \item{"CL"}{Uses the method from Cai and Liu}
 #'   }
 #' @param lambda A sequence of decreasing positive numbers for regularization (used in pcorr method)
-#' @param alpha Significance level for graph inference (default: 0.1)
+#' @param alpha Significance level for graph inference (default: 0.05)
 #' @param sbm_model Character string specifying the model type for SBM method 
-#' (default: \code{"Gauss01"}). For other model options, see the documentation 
+#' (default: \code{"Gauss"}). For other model options, see the documentation 
 #' for \code{fitNSBM} in the \pkg{noisySBM} package.
 #' @param sbm_params List of parameters for SBM method (Q1, Q2, explor)
 #' @param init_params List of initialization parameters for SBM method
@@ -52,7 +52,7 @@
 #'   \item{parameters}{Estimated SBM parameters (e.g., block means)}
 #'   \item{model_selection}{List with selected model dimensions (Q1, Q2) and ICL score}
 #'   \item{sbm_result}{Raw SBM fit object (all candidate models)}
-#'   \item{zscore_method}{Z-score normalization method used (e.g., 'CL', 'pearson+fisher')}
+#'   \item{zscore_method}{Z-score normalization method used ('CL', 'pearson+fisher', 'spearman+fisher')}
 #' }
 #' 
 #' \strong{Common fields}:
@@ -65,7 +65,7 @@
 analyze_microbiome_metabolite_network <- function(X, Y, 
                                                   method,
                                                   lambda = NULL,
-                                                  alpha = 0.1,
+                                                  alpha = 0.05,
                                                   zscore_method = NULL,
                                                   sbm_model = NULL,
                                                   sbm_params = NULL,
@@ -436,28 +436,3 @@ print.microbiome_network_result <- function(x, ...) {
     cat("ICL:", x$model_selection$ICL, "\n")
   }
 }
-
-# Example usage function
-#' @export
-example_usage <- function() {
-  cat("Example usage:\n")
-  cat("# Generate example data\n")
-  cat("set.seed(123)\n")
-  cat("n <- 50  # samples\n")
-  cat("p <- 20  # microbiome features\n") 
-  cat("q <- 15  # metabolite features\n")
-  cat("X <- matrix(abs(rnorm(p*n)), nrow=p, ncol=n)\n")
-  cat("Y <- matrix(abs(rnorm(q*n)), nrow=q, ncol=n)\n")
-  cat("\n")
-  cat("# Run analysis\n")
-  cat("result <- analyze_microbiome_metabolite_network(\n")
-  cat("  X = X, Y = Y,\n")
-  cat("  method = 'bisbm',\n")
-  cat("  zscore_method = 'CL',\n")
-  cat("  alpha = 0.1\n")
-  cat(")\n")
-  cat("\n")
-  cat("# View results\n")
-  cat("print(result)\n")
-}
-
