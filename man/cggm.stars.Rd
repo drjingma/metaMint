@@ -4,8 +4,13 @@
 \alias{cggm.stars}
 \title{Model selection for the censored Gaussian graphical model}
 \usage{
-cggm.stars(est, stars.thresh = 0.1, stars.subsample.ratio = NULL,
-  rep.num = 20, verbose = TRUE)
+cggm.stars(
+  est,
+  stars.thresh = 0.1,
+  stars.subsample.ratio = NULL,
+  rep.num = 20,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{est}{An object from fitting \code{cggm.pcorr}.}

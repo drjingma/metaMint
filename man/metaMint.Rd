@@ -3,7 +3,6 @@
 \docType{package}
 \name{metaMint}
 \alias{metaMint}
-\alias{metaMint-package}
 \title{Joint estimation of metabolite and microbial interaction networks.}
 \description{
 The metaMint package provides functions for estimating the correlation and

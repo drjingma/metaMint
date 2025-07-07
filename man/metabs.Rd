@@ -4,7 +4,9 @@
 \name{metabs}
 \alias{metabs}
 \title{Metabolite data}
-\format{A 128 by 131 data matrix of metabolite concentration profiles.}
+\format{
+A 128 by 131 data matrix of metabolite concentration profiles.
+}
 \description{
 This data matrix consists of the concentration profiles from 128 metabolites.
 }
