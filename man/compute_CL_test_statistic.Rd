@@ -12,9 +12,9 @@ compute_CL_test_statistic(X, Y)
 \item{Y}{A q x n matrix (metabolite features x samples)}
 }
 \value{
-A list with test_stat (T_ij), p_values, and q_values
+test statistic matrix
 }
 \description{
-Computes test statistics T_ij and associated p-values for testing cov(X_i, Y_j) = 0
+Computes test statistics T_ij for testing cov(X_i, Y_j) = 0
 using method from Cai & Liu (2016), see T-statistic page 238.
 }

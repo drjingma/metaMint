@@ -4,7 +4,7 @@
 \alias{run_correlation_method}
 \title{Internal function for correlation methods}
 \usage{
-run_correlation_method(X, Y, method, lambda, alpha, result)
+run_correlation_method(X, Y, method, lambda)
 }
 \description{
 Internal function for correlation methods

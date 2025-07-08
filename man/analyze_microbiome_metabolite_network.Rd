@@ -9,12 +9,11 @@ analyze_microbiome_metabolite_network(
   Y,
   method,
   lambda = NULL,
-  alpha = 0.05,
+  alpha = NULL,
   zscore_method = NULL,
   sbm_model = NULL,
   sbm_params = NULL,
-  init_params = NULL,
-  nb_cores = 1
+  nb_cores = NULL
 )
 }
 \arguments{
@@ -27,14 +26,14 @@ One of:
   \describe{
     \item{"corr"}{Marginal correlation}
     \item{"pcorr"}{Partial correlation (e.g., graphical lasso)}
-    \item{"bisbm"}{Bipartite SBM on marginal associations}
+    \item{"corr_test"}{Marginal correlation after accounting for multiple comparisons}
   }}
 
 \item{lambda}{A sequence of decreasing positive numbers for regularization (used in pcorr method)}
 
 \item{alpha}{Significance level for graph inference (default: 0.05)}
 
-\item{zscore_method}{Character string specifying z-score normalization for marginal SBM method
+\item{zscore_method}{Character string specifying z-score normalization for corr_test method
 One of: 
   \describe{
     \item{"pearson+fisher"}{Uses Pearson correlation, followed by Fisher transform}
@@ -42,51 +41,34 @@ One of:
     \item{"CL"}{Uses the method from Cai and Liu}
   }}
 
-\item{sbm_model}{Character string specifying the model type for SBM method 
-(default: \code{"Gauss"}). For other model options, see the documentation 
-for \code{fitNSBM} in the \pkg{noisySBM} package.}
+\item{sbm_model}{Character string specifying the model type for corr_test method 
+One of: 
+  \describe{
+    \item{"Gauss0"}{the mean of the null distribution is set to 0}
+    \item{"Gauss01"}{the null distribution is set to N(0,1)}
+    \item{"Gauss02distr"}{the mean of the null distribution is set to 0 and the alternative distribution is a single Gaussian distribution, i.e. the block memberships of the nodes do not influence on the alternative distribution}
+  }}
 
-\item{sbm_params}{List of parameters for SBM method (Q1, Q2, explor)}
+\item{sbm_params}{List of parameters for corr_test method (Q1, Q2, explor)}
 
-\item{init_params}{List of initialization parameters for SBM method}
-
-\item{nb_cores}{Number of cores for parallel processing (default: 1)}
+\item{nb_cores}{Number of cores for parallel processing for corr_test method}
 }
 \value{
-A named list with method-dependent contents:
+A named list with method-dependent result
 
 \strong{If \code{method = "corr"}}:
 \describe{
-  \item{correlation_matrix}{Estimated Pearson correlation matrix (p+q) x (p+q)}
-  \item{adjacency_matrix}{Binary matrix indicating significant correlations after FDR correction}
-  \item{qvalues}{FDR-adjusted p-values (same dimensions as correlation matrix)}
+  \item{result}{Estimated correlation matrix (p+q) x (p+q)}
 }
 
 \strong{If \code{method = "pcorr"}}:
 \describe{
-  \item{correlation_matrix}{Estimated covariance matrix (p+q) x (p+q)}
-  \item{partial_correlation_matrix}{Estimated partial correlation matrix, computed from the precision matrix}
-  \item{adjacency_matrix}{Binary matrix indicating stable edges across regularization path}
-  \item{lambda_path}{Sequence of lambda values used for graphical lasso}
-  \item{best_lambda}{Lambda selected via stability selection}
-  \item{parameters}{List containing lambda selection details (best index and path)}
+  \item{result}{Estimated partial correlation matrix (p+q) x (p+q)}
 }
 
-\strong{If \code{method = "bisbm"}}:
+\strong{If \code{method = "corr_test"}}:
 \describe{
-  \item{adjacency_matrix}{Binary matrix indicating inferred edges between microbiome and metabolite features}
-  \item{qvalues}{Matrix of FDR-adjusted p-values for each cross-feature test}
-  \item{clustering}{List with clustering assignments for rows (microbiome) and columns (metabolites)}
-  \item{parameters}{Estimated SBM parameters (e.g., block means)}
-  \item{model_selection}{List with selected model dimensions (Q1, Q2) and ICL score}
-  \item{sbm_result}{Raw SBM fit object (all candidate models)}
-  \item{zscore_method}{Z-score normalization method used ('CL', 'pearson+fisher', 'spearman+fisher')}
-}
-
-\strong{Common fields}:
-\describe{
-  \item{method}{Character string indicating the method used}
-  \item{data_dimensions}{List with \code{p}, \code{q}, and \code{n} (numbers of microbiome features, metabolite features, and samples)}
+  \item{qvalues}{(p x q) matrix of FDR-adjusted p-values for each cross-feature test}
 }
 }
 \description{

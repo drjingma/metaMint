@@ -4,17 +4,7 @@
 \alias{runSBM}
 \title{Internal function to run SBM analysis}
 \usage{
-runSBM(
-  X,
-  Y,
-  method,
-  zscore_method,
-  alpha,
-  sbm_model,
-  sbm_params,
-  init_params,
-  nb_cores
-)
+runSBM(X, Y, zscore_method, alpha, sbm_model, sbm_params, nb_cores)
 }
 \description{
 Internal function to run SBM analysis

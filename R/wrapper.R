@@ -179,7 +179,6 @@ run_correlation_method <- function(X, Y, method, lambda) {
     
     # Estimate correlation matrix
     correlation_matrix <- cggm.corr(combined_data)
-    result = list(result=correlation_matrix)
   } else if (method == "pcorr") {
     cat("Computing partial correlation matrix using cggm.pcorr...\n")
     
@@ -190,9 +189,13 @@ run_correlation_method <- function(X, Y, method, lambda) {
     best_lambda <- cggm.stars(pcorr_result)
     best_lambda_idx <- best_lambda$opt.index
       
-    partial_correlation_matrix <- solve(pcorr_result$icov[[best_lambda_idx]])
-    result = list(result=partial_correlation_matrix)
+    correlation_matrix <- solve(pcorr_result$icov[[best_lambda_idx]])
   }
+  
+  correlation_df = data.frame(correlation_matrix)
+  rownames(correlation_df) = c(rownames(X), rownames(Y))
+  colnames(correlation_df) = rownames(correlation_df)
+  result = list(result=correlation_df)
   
   return(result)
 }
