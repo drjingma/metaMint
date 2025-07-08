@@ -411,28 +411,3 @@ runSBM <- function(X, Y, method, zscore_method, alpha, sbm_model, sbm_params,
   
   return(result)
 }
-
-#' Print method for network analysis results
-#' @export
-print.microbiome_network_result <- function(x, ...) {
-  cat("Microbiome-Metabolite Network Analysis Results\n")
-  cat("==============================================\n")
-  cat("Method:", x$method, "\n")
-  cat("Data dimensions: p =", x$data_dimensions$p, 
-      ", q =", x$data_dimensions$q, 
-      ", n =", x$data_dimensions$n, "\n")
-  
-  if (!is.null(x$adjacency_matrix)) {
-    cat("Number of inferred edges:", sum(x$adjacency_matrix), "\n")
-  }
-  
-  if (!is.null(x$model_selection)) {
-    if (x$method == "sbm") {
-      cat("Best number of blocks (Q):", x$model_selection$best_Q, "\n")
-    } else if (x$method == "bisbm") {
-      cat("Best number of blocks: Q1 =", x$model_selection$best_Q1, 
-          ", Q2 =", x$model_selection$best_Q2, "\n")
-    }
-    cat("ICL:", x$model_selection$ICL, "\n")
-  }
-}
