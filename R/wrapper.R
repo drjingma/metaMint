@@ -290,7 +290,10 @@ runSBM <- function(X, Y, zscore_method, alpha, sbm_model, sbm_params, nb_cores) 
                                         best_solution$clustering_col,
                                         best_solution$theta,
                                         alpha = alpha)
+  qval_df <- data.frame(graph_result$qvalues)
+  rownames(qval_df) <- rownames(X)
+  colnames(qval_df) <- rownames(Y)
   
-  result <- list(result = graph_result$qvalues)
+  result <- list(result = qval_df)
   return(result)
 }
