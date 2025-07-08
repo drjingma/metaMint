@@ -17,7 +17,7 @@
 #'     \item{"CL"}{Uses the method from Cai and Liu}
 #'   }
 #' @param lambda A sequence of decreasing positive numbers for regularization (used in pcorr method)
-#' @param alpha Significance level for graph inference (default: 0.05)
+#' @param alpha Significance level for corr_test method (default: 0.05)
 #' @param sbm_model Character string specifying the model type for corr_test method 
 #' One of: 
 #'   \describe{
