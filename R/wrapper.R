@@ -195,7 +195,12 @@ run_correlation_method <- function(X, Y, method, lambda) {
   correlation_df = data.frame(correlation_matrix)
   rownames(correlation_df) = c(rownames(X), rownames(Y))
   colnames(correlation_df) = rownames(correlation_df)
-  result = list(result=correlation_df)
+  
+  if (method == "corr") {
+    result = list(result.corr=correlation_df)
+  } else {
+    result = list(result.pcorr=correlation_df)
+  }
   
   return(result)
 }
@@ -297,6 +302,6 @@ runSBM <- function(X, Y, zscore_method, alpha, sbm_model, sbm_params, nb_cores) 
   rownames(qval_df) <- rownames(X)
   colnames(qval_df) <- rownames(Y)
   
-  result <- list(result = qval_df)
+  result <- list(result.corr_test = qval_df)
   return(result)
 }
