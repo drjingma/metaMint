@@ -8,10 +8,17 @@
 #' @param ... Additional arguments passed to ComplexHeatmap::Heatmap
 #'
 #' @return A ComplexHeatmap object
+#' 
+#' @examples
+#' result = readRDS("data/bisbm_test.rds")
+#' visualize_network_heatmap(result, cluster_rows = T, cluster_columns = T,
+#'                           row_names_gp=grid::gpar(fontsize=7),
+#'                           column_names_gp=grid::gpar(fontsize=7))
+#'                           
 #' @export
 visualize_network_heatmap <- function(result, 
-                                      cluster_rows = FALSE,
-                                      cluster_columns = FALSE,
+                                      cluster_rows = TRUE,
+                                      cluster_columns = TRUE,
                                       show_values = FALSE,
                                       value_cex = 0.5,
                                       ...) {
@@ -45,7 +52,3 @@ visualize_network_heatmap <- function(result,
                           column_title = title,
                           ...)
 }
-
-visualize_network_heatmap(result, cluster_rows = T, cluster_columns = T, 
-                          row_names_gp=grid::gpar(fontsize=7), 
-                          column_names_gp=grid::gpar(fontsize=7))
