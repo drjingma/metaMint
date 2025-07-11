@@ -21,10 +21,10 @@
 #'                                column_names_gp=grid::gpar(fontsize=7))
 #' ht                   
 #' result = readRDS("data/corr.rds")
-ht = visualize_network_heatmap(result, cluster_rows = T, cluster_columns = T,
-                               row_names_gp=grid::gpar(fontsize=10),
-                               column_names_gp=grid::gpar(fontsize=10),
-                               save_pdf = "plot.pdf", width=12, height=12)
+#' ht = visualize_network_heatmap(result, cluster_rows = T, cluster_columns = T,
+#'                               row_names_gp=grid::gpar(fontsize=10),
+#'                               column_names_gp=grid::gpar(fontsize=10),
+#'                               save_pdf = "plot.pdf", width=12, height=12)
 #' @export
 visualize_network_heatmap <- function(result, 
                                       cluster_rows = TRUE,
