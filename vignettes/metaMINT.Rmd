@@ -81,4 +81,123 @@ est_InvCor <- cggm.pcorr(t(OTUs_mclr))
 stars_obj <- cggm.stars(est_InvCor,stars.thresh = 0.1, rep.num = 20)
 ```
 
+## Convenience Wrapper Function
+To streamline the process of microbiome-metabolite network analysis, the metaMint package provides a convenient wrapper function `analyze_microbiome_metabolite_network`. 
+
+This function unifies the preprocessing, inference, and result-saving steps into a single call. The results are saved as an .rds file in the subdirectory `data`, named according to the analysis method (e.g., `corr.rds`, `pcorr.rds`, or `corr_test.rds`).
+
+### Required Inputs
+
+To run `analyze_microbiome_metabolite_network`, you must provide:
+
+- `X`: a `p × n` matrix of microbiome feature abundances, where `p` is the number of microbial features (e.g., taxa or ASVs) and `n` is the number of samples.  
+- `Y`: a `q × n` matrix of metabolite abundances, where `q` is the number of metabolite features and `n` matches the number of samples in `X`.  
+- `method`: a character string indicating the type of analysis to perform. Must be one of:
+  - `corr`: marginal correlation analysis  
+  - `pcorr`: partial correlation using graphical lasso  
+  - `corr_test`: correlation testing with FDR correction and network modeling via stochastic block models (SBM)  
+
+### Optional Parameters
+
+Depending on the selected method, several optional parameters can be specified:
+
+**For method = `pcorr`:**
+
+- `lambda`: a numeric vector of regularization parameters for graphical lasso. If not provided, a default sequence is computed based on the data dimensions: `seq(0.1, 3, 0.1) * sqrt(log(nrow(X) + nrow(Y)) / ncol(X)`.
+
+**For method = `corr_test`:**
+
+- `zscore_method`: how to compute the test statistics. One of:
+  - `pearson+fisher`: Pearson correlation followed by Fisher transformation  
+  - `spearman+fisher`: Spearman correlation followed by Fisher transformation  
+  - `CL`: Cai & Liu test statistic using a variance-stabilized form (default if `zscore_method` not provided)
+- `alpha`: significance threshold for FDR-adjusted p-values (default: `0.05`)  
+- `sbm_model`: distributional assumptions for the SBM. One of:
+  - `Gauss0`: null mean is 0 (default if `sbm_model` not provided)
+  - `Gauss01`: null is standard normal N(0, 1)  
+  - `Gauss02distr`: null mean is 0; alternative modeled as a single Gaussian  
+- `sbm_params`: a list of SBM model selection parameters:
+  - `Q1`: vector of candidate numbers of microbiome clusters  
+  - `Q2`: vector of candidate numbers of metabolite clusters  
+  - `explor`: exploration factor used for model comparison  
+- `nb_cores`: number of CPU cores to use for parallel SBM fitting. If not provided, all available cores are used.
+
+### Output
+
+The function returns a named list, which depends on the selected method:
+
+- For `method = "corr"`:
+  - `result.corr`: a `(p+q) × (p+q)` matrix of marginal Pearson correlations.
+
+- For `method = "pcorr"`:
+  - `result.pcorr`: a `(p+q) × (p+q)` matrix of partial correlations estimated using graphical lasso.
+
+- For `method = "corr_test"`:
+  - `result.corr_test`: a `p × q` matrix of FDR-adjusted p-values  
+  - `microbiome_clusters`: cluster assignments for microbial features  
+  - `metabolite_clusters`: cluster assignments for metabolites
+  
+### Examples
+Below, we first run the wrapper function using the method `corr_test`: 
+```{r}
+data(BV, package = "metaMint")
+
+result <- analyze_microbiome_metabolite_network(
+  X = OTUs,
+  Y = metabs,
+  method = "corr_test",
+  save_dir = "~/test",
+  zscore_method = "CL",
+  sbm_model = "Gauss0",
+  alpha = 0.05,
+  sbm_params = list(Q1 = 1:5, Q2 = 1:5, explor = 1.5),
+  nb_cores = 4
+)
+
+# Inspect the FDR-adjusted matrix
+head(result$result.corr_test)
+
+# Inspect Metabolite clusters
+result$metabolite_clusters
+
+# Inspect Microbiome clusters
+result$microbiome_clusters
+```
+We can then visualize the results with `visualize_network_heatmap`, which saves the plot to `./corr_test.pdf`. 
+```{r}
+visualize_network_heatmap(result, 
+                          adjacency_threshold=0.05,
+                          save_pdf="corr_test.pdf",
+                          rownames_size=10,
+                          colnames_size=6)
+```
+
+We next run an example using the method `corr`. Here, we subset the data since this method takes quite some time to run (around an hour). 
+```{r}
+data(BV, package = "metaMint")
+
+result <- analyze_microbiome_metabolite_network(
+  X = OTUs[1:10, 1:10],
+  Y = metabs[1:10, 1:10],
+  method = "corr",
+  save_dir = "~/test",
+  zscore_method = "CL",
+  sbm_model = "Gauss0",
+  alpha = 0.05,
+  sbm_params = list(Q1 = 1:5, Q2 = 1:5, explor = 1.5),
+  nb_cores = 4
+)
+
+# Inspect the correlation matrix
+head(result$result.corr)
+
+visualize_network_heatmap(result, 
+                          adjacency_threshold=0.05,
+                          save_pdf="corr.pdf",
+                          rownames_size=10,
+                          colnames_size=10)
+
+```
+
+
 ## References

@@ -3,6 +3,7 @@
 #' @param X A p x n matrix of microbiome abundances (p features, n samples)
 #' @param Y A q x n matrix of metabolite abundances (q features, n samples)
 #' @param method Character string specifying the method to use.
+#' @param save_dir Directory to save results to. 
 #' One of: 
 #'   \describe{
 #'     \item{"corr"}{Marginal correlation}
@@ -43,18 +44,20 @@
 #' \strong{If \code{method = "corr_test"}}:
 #' \describe{
 #'   \item{qvalues}{(p x q) matrix of FDR-adjusted p-values for each cross-feature test}
+#'   \item{metabolite_clusters}{metabolite clustering done by graph inference}
+#'   \item{microbiome_clusters}{microbiome clustering done by graph inference}
 #' }
 #' 
 #' @export
 analyze_microbiome_metabolite_network <- function(X, Y, 
                                                   method,
+                                                  save_dir,
                                                   lambda = NULL,
                                                   alpha = NULL,
                                                   zscore_method = NULL,
                                                   sbm_model = NULL,
                                                   sbm_params = NULL,
                                                   nb_cores = NULL) {
-  
   # Input validation and default values
   valid_methods <- c("corr", "pcorr", "corr_test")
   
@@ -164,7 +167,11 @@ analyze_microbiome_metabolite_network <- function(X, Y,
   }
   
   cat("Analysis completed successfully.\n")
-
+  
+  savefile = paste0(method, ".rds")
+  savepath = paste(save_dir, savefile, sep="/")
+  cat("Saving results to", savepath)
+  saveRDS(result, savepath)
   return(result)
 }
 
@@ -302,6 +309,9 @@ runSBM <- function(X, Y, zscore_method, alpha, sbm_model, sbm_params, nb_cores) 
   rownames(qval_df) <- rownames(X)
   colnames(qval_df) <- rownames(Y)
   
-  result <- list(result.corr_test = qval_df)
+  result <- list(result.corr_test = qval_df, 
+                 metabolite_clusters=best_solution$clustering_col,
+                 microbiome_clusters=best_solution$clustering_row)
   return(result)
 }
+
