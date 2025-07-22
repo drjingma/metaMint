@@ -58,6 +58,7 @@ analyze_microbiome_metabolite_network <- function(X, Y,
                                                   sbm_model = NULL,
                                                   sbm_params = NULL,
                                                   nb_cores = NULL) {
+  options(warn = 1)
   # Input validation and default values
   valid_methods <- c("corr", "pcorr", "corr_test")
   

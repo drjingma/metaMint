@@ -181,23 +181,41 @@ result <- analyze_microbiome_metabolite_network(
   Y = metabs[1:10, 1:10],
   method = "corr",
   save_dir = "~/test",
-  zscore_method = "CL",
-  sbm_model = "Gauss0",
-  alpha = 0.05,
-  sbm_params = list(Q1 = 1:5, Q2 = 1:5, explor = 1.5),
-  nb_cores = 4
 )
 
 # Inspect the correlation matrix
 head(result$result.corr)
 
 visualize_network_heatmap(result, 
-                          adjacency_threshold=0.05,
+                          adjacency_threshold = 10^-6,
                           save_pdf="corr.pdf",
                           rownames_size=10,
                           colnames_size=10)
 
 ```
 
+Finally, we do the same using the `pcorr` method:
 
+```{r}
+data(BV, package = "metaMint")
+
+result <- analyze_microbiome_metabolite_network(
+  X = OTUs[1:10, 1:10],
+  Y = metabs[1:10, 1:10],
+  method = "pcorr",
+  save_dir = "~/test",
+  lambda = seq(0.1, 3, 0.1) * sqrt(log(10 + 10) / 10)
+)
+
+# Inspect the correlation matrix
+head(result$result.pcorr)
+
+visualize_network_heatmap(result, 
+                          adjacency_threshold = 10^-6,
+                          save_pdf="pcorr.pdf",
+                          rownames_size=10,
+                          colnames_size=10)
+
+
+```
 ## References
